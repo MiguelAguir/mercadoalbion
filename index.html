@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precios de Mercado de Albion Online</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Precios de Mercado de Albion Online</h1>
+        <div class="filters">
+            <label for="tierFilter">Nivel:</label>
+            <select id="tierFilter" onchange="fetchPrices()">
+                <option value="">Todos los Niveles</option>
+                <option value="T4">T4</option>
+                <option value="T5">T5</option>
+                <option value="T6">T6</option>
+                <option value="T7">T7</option>
+                <option value="T8">T8</option>
+            </select>
+            <label for="resourceFilter">Recurso:</label>
+            <select id="resourceFilter" onchange="fetchPrices()">
+                <option value="">Todos los Recursos</option>
+                <option value="ROCK">Piedra</option>
+                <option value="HIDE">Cuero</option>
+                <option value="ORE">Mineral</option>
+                <option value="FIBER">Fibra</option>
+                <option value="WOOD">Madera</option>
+                <option value="STONEBLOCK">Bloque de Piedra</option>
+                <option value="LEATHER">Cuero Refinado</option>
+                <option value="METALBAR">Lingote de Metal</option>
+                <option value="CLOTH">Tela</option>
+                <option value="PLANKS">Tablas de Madera</option>
+            </select>
+            <label for="cityFilter">Ciudad:</label>
+            <select id="cityFilter" onchange="fetchPrices()">
+                <option value="">Todas las Ciudades</option>
+                <option value="Brecilien">Brecilien</option>
+                <option value="Bridgewatch">Bridgewatch</option>
+                <option value="Fort Sterling">Fort Sterling</option>
+                <option value="Lymhurst">Lymhurst</option>
+                <option value="Martlock">Martlock</option>
+                <option value="Thetford">Thetford</option>
+                <option value="Caerleon">Caerleon</option>
+            </select>
+            <label for="enchantmentFilter">Encantamiento:</label>
+            <select id="enchantmentFilter" onchange="fetchPrices()">
+                <option value="">Todos los Encantamientos</option>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+        </div>
+        <table id="priceTable">
+            <thead>
+                <tr>
+                    <th>Recurso</th>
+                    <th>Nivel</th>
+                    <th>Encantamiento</th>
+                    <th>Ciudad</th>
+                    <th>Venta Mínima</th>
+                    <th>Venta Máxima</th>
+                    <th>Compra Mínima</th>
+                    <th>Compra Máxima</th>
+                    <th>Última Actualización</th>
+                </tr>
+            </thead>
+            <tbody id="priceBody"></tbody>
+        </table>
+        <div id="errorMessage" class="error"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

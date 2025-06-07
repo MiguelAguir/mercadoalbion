@@ -1,0 +1,129 @@
+/* Importar fuentes medievales de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&display=swap');
+
+body {
+    background: linear-gradient(135deg, #2E3B29, #1A2C1A); /* Degradado verde oscuro */
+    background-size: cover;
+    font-family: 'Cinzel', 'MedievalSharp', Arial, sans-serif;
+    color: #E8D4A2; /* Beige claro para texto */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background: url('https://www.transparenttextures.com/patterns/parchment.png'), #4A2C2A; /* Textura de pergamino sobre marrón oscuro */
+    padding: 20px;
+    border: 2px solid #D4A017; /* Borde dorado */
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(212, 160, 23, 0.5); /* Sombra dorada */
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+h1 {
+    text-align: center;
+    color: #D4A017; /* Dorado para el título */
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.filters label {
+    color: #E8D4A2;
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.filters select {
+    padding: 5px 10px;
+    border: 1px solid #D4A017;
+    border-radius: 5px;
+    background: #3A2F2F;
+    color: #E8D4A2;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.filters select:hover {
+    border-color: #FFD700; /* Dorado brillante al pasar el ratón */
+}
+
+.filters select:focus {
+    outline: none;
+    border-color: #FFD700;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: rgba(58, 47, 47, 0.8); /* Fondo semitransparente */
+    border: 2px solid #D4A017;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #D4A017;
+}
+
+th {
+    background: #2E3B29; /* Verde oscuro para encabezados */
+    color: #FFD700; /* Dorado para texto de encabezados */
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom: 2px solid #D4A017;
+}
+
+tr:nth-child(even) {
+    background: rgba(74, 44, 42, 0.5); /* Filas alternadas en marrón oscuro */
+}
+
+tr:hover {
+    background: rgba(212, 160, 23, 0.2); /* Resaltado dorado al pasar el ratón */
+}
+
+.error {
+    color: #FF4136; /* Rojo para mensajes de error */
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filters label, .filters select {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    table {
+        font-size: 0.9em;
+    }
+
+    th, td {
+        padding: 8px;
+    }
+}
