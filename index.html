@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Precios de Mercado de Albion Online</title>
+    <title>Mercado Albion Online + Recomendaciones IA</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,6 +19,7 @@
                 <option value="T7">T7</option>
                 <option value="T8">T8</option>
             </select>
+
             <label for="resourceFilter">Recurso:</label>
             <select id="resourceFilter" onchange="fetchPrices()">
                 <option value="">Todos los Recursos</option>
@@ -33,6 +34,7 @@
                 <option value="CLOTH">Tela</option>
                 <option value="PLANKS">Tablas de Madera</option>
             </select>
+
             <label for="cityFilter">Ciudad:</label>
             <select id="cityFilter" onchange="fetchPrices()">
                 <option value="">Todas las Ciudades</option>
@@ -44,9 +46,10 @@
                 <option value="Thetford">Thetford</option>
                 <option value="Caerleon">Caerleon</option>
             </select>
+
             <label for="enchantmentFilter">Encantamiento:</label>
             <select id="enchantmentFilter" onchange="fetchPrices()">
-                <option value="">Todos los Encantamientos</option>
+                <option value="">Todos</option>
                 <option value="0">0</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
@@ -54,24 +57,28 @@
                 <option value="4">4</option>
             </select>
         </div>
+
         <table id="priceTable">
             <thead>
                 <tr>
                     <th>Recurso</th>
                     <th>Nivel</th>
-                    <th>Encantamiento</th>
+                    <th>Enc.</th>
                     <th>Ciudad</th>
-                    <th>Venta Mínima</th>
-                    <th>Venta Máxima</th>
-                    <th>Compra Mínima</th>
-                    <th>Compra Máxima</th>
-                    <th>Última Actualización</th>
+                    <th>Venta Mín.</th>
+                    <th>Venta Máx.</th>
+                    <th>Compra Mín.</th>
+                    <th>Compra Máx.</th>
+                    <th>Actualización</th>
                 </tr>
             </thead>
             <tbody id="priceBody"></tbody>
         </table>
+
         <div id="errorMessage" class="error"></div>
     </div>
+
     <script src="script.js"></script>
+    <div id="errorMessage" class="error"></div>
 </body>
 </html>
