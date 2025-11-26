@@ -63,6 +63,15 @@ const resources = [
 const locations = "Brecilien,Bridgewatch,Fort%20Sterling,Lymhurst,Martlock,Thetford,Caerleon";
 const apiUrlBase = "https://www.albion-online-data.com/api/v2/stats/prices/";
 
+const resourceNames = {
+    "ROCK":"Piedra","HIDE":"Cuero","ORE":"Mineral","FIBER":"Fibra","WOOD":"Madera",
+    "STONEBLOCK":"Bloque de Piedra","LEATHER":"Cuero Refinado","METALBAR":"Lingote de Metal",
+    "CLOTH":"Tela","PLANKS":"Tablas de Madera"
+};
+
+// Variable global para guardar los datos actuales
+let marketData = [];
+
 async function fetchPrices() {
     const tbody = document.getElementById("priceBody");
     const errorDiv = document.getElementById("errorMessage");
@@ -71,130 +80,188 @@ async function fetchPrices() {
     const cityFilter = document.getElementById("cityFilter").value;
     const enchantmentFilter = document.getElementById("enchantmentFilter").value;
 
+    errorDiv.textContent = "";
+
     try {
-        // Filtrar recursos según nivel, tipo de recurso y encantamiento
-        const filteredResources = resources.filter(resource => {
-            const tierMatch = !tierFilter || resource.startsWith(tierFilter);
-            const resourceMatch = !resourceFilter || resource.includes(resourceFilter);
-            const enchantmentMatch = !enchantmentFilter || resource.includes(`_LEVEL${enchantmentFilter}@${enchantmentFilter}`) || (enchantmentFilter === "0" && !resource.includes("_LEVEL"));
-            return tierMatch && resourceMatch && enchantmentMatch;
+        const filteredResources = resources.filter(r => {
+            const tierOk = !tierFilter || r.startsWith(tierFilter);
+            const resOk = !resourceFilter || r.includes(resourceFilter);
+            const enchOk = !enchantmentFilter || 
+                r.includes(`_LEVEL${enchantmentFilter}@${enchantmentFilter}`) || 
+                (enchantmentFilter === "0" && !r.includes("_LEVEL"));
+            return tierOk && resOk && enchOk;
         });
 
         if (filteredResources.length === 0) {
-            errorDiv.textContent = "No se encontraron recursos para los filtros seleccionados.";
-            tbody.innerHTML = "";
+            tbody.innerHTML = "<tr><td colspan='9' style='text-align:center;'>No hay recursos con esos filtros</td></tr>";
+            marketData = [];
+            crearBotonFlips();
             return;
         }
 
-        // Dividir recursos en bloques para evitar límite de URL (4096 caracteres)
-        const chunkSize = 50;
-        const resourceChunks = [];
-        for (let i = 0; i < filteredResources.length; i += chunkSize) {
-            resourceChunks.push(filteredResources.slice(i, i + chunkSize));
+        const chunks = [];
+        for (let i = 0; i < filteredResources.length; i += 50) {
+            chunks.push(filteredResources.slice(i, i + 50));
         }
 
         const allData = [];
-        for (const chunk of resourceChunks) {
-            const apiUrl = `${apiUrlBase}${chunk.join(',')}?locations=${locations}`;
-            const response = await fetch(apiUrl);
-            if (!response.ok) {
-                throw new Error(`Error en la solicitud: ${response.status}`);
-            }
-            const data = await response.json();
-            allData.push(...data);
+        for (const chunk of chunks) {
+            const url = `${apiUrlBase}${chunk.join(',')}?locations=${locations}`;
+            const res = await fetch(url);
+            if (!res.ok) continue;
+            allData.push(...await res.json());
         }
 
         tbody.innerHTML = "";
+        marketData = [];
 
-        const resourceNames = {
-            "ROCK": "Piedra",
-            "HIDE": "Cuero",
-            "ORE": "Mineral",
-            "FIBER": "Fibra",
-            "WOOD": "Madera",
-            "STONEBLOCK": "Bloque de Piedra",
-            "LEATHER": "Cuero Refinado",
-            "METALBAR": "Lingote de Metal",
-            "CLOTH": "Tela",
-            "PLANKS": "Tablas de Madera"
-        };
-
-        // Agrupar datos y filtrar duplicados
-        const groupedData = {};
+        const items = {};
         allData.forEach(item => {
-            const tierMatch = item.item_id.match(/^T(\d+)/);
-            const enchantMatch = item.item_id.match(/@(\d+)/);
-            const enchantment = enchantMatch ? enchantMatch[1] : "0";
-
-            // Extraer baseResource correctamente
-            let baseResource = item.item_id.replace(/^T\d+_/, "");
-            baseResource = baseResource.replace(/_LEVEL\d+@(\d+)/, "");
-            baseResource = baseResource.replace(/_LEVEL\d+/, "");
-
-            // Normalizar el nombre de la ciudad para comparación
+            const tier = item.item_id.match(/^T(\d+)/)?.[1] || "?";
+            const ench = item.item_id.match(/@(\d+)/)?.[1] || "0";
+            const base = item.item_id.replace(/^T\d+_/, "").replace(/_LEVEL.*$/,"");
             const city = item.city.replace(/%20/g, " ");
+            if (cityFilter && city !== cityFilter) return;
 
-            // Filtrar por ciudad
-            const cityMatch = !cityFilter || city === cityFilter;
-
-            if (!cityMatch) return;
-
-            // Depuración
-            console.log(`Item ID: ${item.item_id}, Base Resource: ${baseResource}, Enchantment: ${enchantment}, City: ${city}, Sell Price Min: ${item.sell_price_min}`);
-
-            const key = `${item.item_id}-${city}-${enchantment}`;
-
-            // Solo guardar si hay datos válidos o es la primera entrada
-            if (!groupedData[key] || (item.sell_price_min > 0 || item.sell_price_max > 0 || item.buy_price_min > 0 || item.buy_price_max > 0)) {
-                groupedData[key] = {
-                    item_id: item.item_id,
-                    city: city,
-                    tier: tierMatch ? tierMatch[1] : "?",
-                    baseResource: baseResource,
-                    enchantment: enchantment,
-                    sell_price_min: item.sell_price_min,
-                    sell_price_max: item.sell_price_max,
-                    buy_price_min: item.buy_price_min,
-                    buy_price_max: item.buy_price_max,
-                    sell_price_min_date: item.sell_price_min_date
+            const key = `${item.item_id}-${city}`;
+            if (!items[key] || item.sell_price_min > 0) {
+                items[key] = {
+                    name: resourceNames[base] || base,
+                    tier, ench, city,
+                    sell_min: item.sell_price_min || 0,
+                    sell_max: item.sell_price_max || 0,
+                    buy_min: item.buy_price_min || 0,
+                    buy_max: item.buy_price_max || 0,
+                    date: item.sell_price_min_date || ""
                 };
+                marketData.push(items[key]);
             }
         });
 
-        // Convertir los datos agrupados en filas de la tabla
-        let hasEnchantmentData = false;
-        Object.values(groupedData).forEach(item => {
-            const resourceName = resourceNames[item.baseResource] || item.baseResource;
-            if (item.enchantment !== "0" && (item.sell_price_min > 0 || item.sell_price_max > 0 || item.buy_price_min > 0 || item.buy_price_max > 0)) {
-                hasEnchantmentData = true;
-            }
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${resourceName}</td>
-                <td>T${item.tier}</td>
-                <td>${item.enchantment}</td>
-                <td>${item.city}</td>
-                <td>${item.sell_price_min || 'N/A'}</td>
-                <td>${item.sell_price_max || 'N/A'}</td>
-                <td>${item.buy_price_min || 'N/A'}</td>
-                <td>${item.buy_price_max || 'N/A'}</td>
-                <td>${item.sell_price_min_date || 'N/A'}</td>
+        Object.values(items).forEach(i => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${i.name}</td>
+                <td>T${i.tier}</td>
+                <td>${i.ench}</td>
+                <td>${i.city}</td>
+                <td>${i.sell_min.toLocaleString()}</td>
+                <td>${i.sell_max.toLocaleString()}</td>
+                <td>${i.buy_min.toLocaleString()}</td>
+                <td>${i.buy_max.toLocaleString()}</td>
+                <td>${i.date || 'N/A'}</td>
             `;
-            tbody.appendChild(row);
+            tbody.appendChild(tr);
         });
 
-        if (Object.keys(groupedData).length === 0) {
-            errorDiv.textContent = "No se encontraron datos para los filtros seleccionados.";
-        } else if (!hasEnchantmentData) {
-            errorDiv.textContent = "";
-        } else {
-            errorDiv.textContent = "";
-        }
-    } catch (error) {
-        errorDiv.textContent = `Error al cargar los precios: ${error.message}`;
-        console.error(error);
+        crearBotonFlips();
+
+    } catch (e) {
+        errorDiv.textContent = "Error al cargar datos. Reintentando...";
+        console.error(e);
     }
 }
 
-// Ejecutar la función al cargar la página
+// === BOTÓN QUE APARECE SOLO CUANDO HAY DATOS ===
+function crearBotonFlips() {
+    let btn = document.getElementById("btnFlips");
+    if (btn) btn.remove();
+
+    const flips = calcularFlips();
+    if (flips.length === 0) return;
+
+    btn = document.createElement("button");
+    btn.id = "btnFlips";
+    btn.innerHTML = `MEJORES FLIPS (${flips.length})`;
+    btn.style.cssText = `
+        position:fixed; bottom:30px; right:30px; z-index:9999;
+        background:#D4A017; color:black; font-weight:bold; font-size:20px;
+        padding:18px 30px; border:none; border-radius:50px;
+        box-shadow:0 8px 20px rgba(212,160,23,0.8);
+        cursor:pointer; font-family:'Cinzel',serif;
+        transition:all 0.4s;
+    `;
+    btn.onmouseover = () => btn.style.transform = "scale(1.15)";
+    btn.onmouseout = () => btn.style.transform = "scale(1)";
+    btn.onclick = abrirModalFlips;
+    document.body.appendChild(btn);
+}
+
+function calcularFlips() {
+    const porItem = {};
+    marketData.forEach(item => {
+        if (item.sell_min <= 0) return;
+        const id = `${item.name} T${item.tier}${item.ench !== '0' ? '.'+item.ench : ''}`;
+        if (!porItem[id]) porItem[id] = [];
+        porItem[id].push({ ciudad: item.city, precio: item.sell_min });
+    });
+
+    const flips = [];
+    Object.entries(porItem).forEach(([nombre, ciudades]) => {
+        if (ciudades.length < 2) return;
+        ciudades.sort((a,b) => a.precio - b.precio);
+        const comprar = ciudades[0];
+        const vender = ciudades[ciudades.length-1];
+        const profit = vender.precio - comprar.precio;
+        if (profit >= 1000) {
+            flips.push({
+                item: nombre,
+                comprar: comprar.ciudad,
+                precioCompra: comprar.precio,
+                vender: vender.ciudad,
+                precioVenta: vender.precio,
+                profit,
+                margen: ((profit / comprar.precio) * 100).toFixed(1)
+            });
+        }
+    });
+
+    return flips.sort((a,b) => b.profit - a.profit).slice(0, 15);
+}
+
+function abrirModalFlips() {
+    const flips = calcularFlips();
+    const modal = document.createElement("div");
+    modal.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;";
+    modal.innerHTML = `
+        <div style="background:url('https://www.transparenttextures.com/patterns/parchment.png'), #2E1B1B; border:5px double #D4A017; border-radius:20px; padding:40px; max-width:95%; max-height:95%; overflow:auto; box-shadow:0 0 50px #D4A017;">
+            <h2 style="text-align:center;color:#FFD700;font-size:3em;margin:0 0 30px;text-shadow:0 0 0 20px gold;">MEJORES FLIPS DEL MERCADO</h2>
+            <div style="max-height:70vh; overflow-y:auto;">
+                <table style="width:100%;border-collapse:collapse;background:rgba(0,0,0,0.6);">
+                    <thead><tr style="background:#2E3B29;">
+                        <th style="padding:15px;color:#FFD700;">Item</th>
+                        <th style="padding:15px;color:#FFD700;">Comprar</th>
+                        <th style="padding:15px;color:#FFD700;">Precio</th>
+                        <th style="padding:15px;color:#FFD700;">Vender</th>
+                        <th style="padding:15px;color:#FFD700;">Precio</th>
+                        <th style="padding:15px;color:#FFD700;">Profit</th>
+                        <th style="padding:15px;color:#FFD700;">Margen</th>
+                    </tr></thead>
+                    <tbody>
+                        ${flips.map(f => {
+                            const color = f.profit > 50000 ? 'rgba(255,0,255,0.4)' : 
+                                         f.profit > 20000 ? 'rgba(255,215,0,0.4)' : 'rgba(0,255,0,0.3)';
+                            return `<tr style="background:${color};">
+                                <td style="padding:12px;text-align:center;"><strong>${f.item}</strong></td>
+                                <td style="padding:12px;text-align:center;color:#0f0;">${f.comprar}</td>
+                                <td style="padding:12px;text-align:center;">${f.precioCompra.toLocaleString()}</td>
+                                <td style="padding:12px;text-align:center;color:#f00;">${f.vender}</td>
+                                <td style="padding:12px;text-align:center;">${f.precioVenta.toLocaleString()}</td>
+                                <td style="padding:12px;text-align:center;font-weight:bold;color:#FFD700;">${f.profit.toLocaleString()}</td>
+                                <td style="padding:12px;text-align:center;font-weight:bold;color:#FFD700;">${f.margen}%</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="margin-top:30px;padding:15px 40px;background:#D4A017;color:black;border:none;border-radius:15px;font-weight:bold;cursor:pointer;">
+                Cerrar
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Primera carga
 fetchPrices();
