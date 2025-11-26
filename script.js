@@ -203,7 +203,7 @@ function calcularFlips() {
         const comprar = ciudades[0];
         const vender = ciudades[ciudades.length-1];
         const profit = vender.precio - comprar.precio;
-        if (profit >= 1000) {
+        if (profit >= 300 || ((profit / comprar.precio) * 100) >= 10) {
             flips.push({
                 item: nombre,
                 comprar: comprar.ciudad,
@@ -216,7 +216,7 @@ function calcularFlips() {
         }
     });
 
-    return flips.sort((a,b) => b.profit - a.profit).slice(0, 15);
+    return flips.sort((a,b) => b.profit - a.profit);
 }
 
 function abrirModalFlips() {
